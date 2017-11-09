@@ -1,5 +1,5 @@
 boto==2.48.0
-Django==1.6.5
+Django==1.7.1
 django-jinja==1.0.2
 django-timelog==0.4
 funcsigs==1.0.2

@@ -32,11 +32,11 @@ def add_to_context(context_dict, request, template_name, profile, concretize):
                                     (not request.user.is_anonymous()))
 
 def request_wrapper(view_fn, *args, **kwargs):
-    def real_view_fn(request):
+    def real_view_fn(request, **kwargs):
         try:
             profile = UserProfile.objects.get(username=request.user.username)
-
             ans = view_fn(request, profile, *args, **kwargs)
+
             template_name = ans[0]
             context_dict = ans[1]
 
@@ -75,8 +75,8 @@ def index(request, user_profile):
 @login_required
 @request_wrapper
 @jeeves
-def profile_view(request):
-    profile = UserProfile.objects.get(username=request.user.username)
+def profile_view(request, profile, profile_name):
+    profile = UserProfile.objects.get(username=profile_name)
     if profile == None:
         profile = UserProfile(username=request.user.username)
     

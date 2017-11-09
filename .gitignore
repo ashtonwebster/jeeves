@@ -1,3 +1,7 @@
 
 *~
 *.pyc
+*.db
+*.sw[op]
+jeeves_venv/
+exported*
