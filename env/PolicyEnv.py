@@ -131,6 +131,11 @@ class SolverState:
         assert self.solver.check()
 
         JeevesLib.log_counts(len(vars_needed))
+        #import pdb; pdb.set_trace();
+
+        #if (JeevesLib.jeevesState.is_honeypot and \
+        #       type(f) == fast.AST.Facet and f.cond.eval(self.result)):
+        #        return "HONEYPOT"
 
         return f.eval(self.result)
 
@@ -181,6 +186,8 @@ class PolicyEnv:
   def concretizeExp(self, ctxt, f, pathenv):
     solver_state = self.getNewSolverState(ctxt)
     return solver_state.concretizeExp(f, pathenv)
+    
+
 
   """
   # Takes a context and an expression

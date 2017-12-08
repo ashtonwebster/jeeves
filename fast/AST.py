@@ -50,27 +50,30 @@ class JeevesState:
 	pass
 
     def init(self):
-				# Cache of concretized values.
-				self._concretecache = defaultdict(env.ConcreteCache.ConcreteCache)
+        # Cache of concretized values.
+        self._concretecache = defaultdict(env.ConcreteCache.ConcreteCache)
 
-				# Regular environments.
-				self._varenv = defaultdict(env.VarEnv.VarEnv)
-				self._pathenv = defaultdict(env.PathVars.PathVars)
-				self._policyenv = defaultdict(env.PolicyEnv.PolicyEnv)
-				self._writeenv = defaultdict(env.WritePolicyEnv.WritePolicyEnv)
-				self._all_labels = defaultdict(dict)
+        # Regular environments.
+        self._varenv = defaultdict(env.VarEnv.VarEnv)
+        self._pathenv = defaultdict(env.PathVars.PathVars)
+        self._policyenv = defaultdict(env.PolicyEnv.PolicyEnv)
+        self._writeenv = defaultdict(env.WritePolicyEnv.WritePolicyEnv)
+        self._all_labels = defaultdict(dict)
 
-				self._solverstate = defaultdict()
+        self._solverstate = defaultdict()
 
         # Logging.
-				self._log_policies = False
-				self._policy_log_filehandle = None
+        self._log_policies = False
+        self._policy_log_filehandle = None
 
-				self._num_concretize = 0
-				self._num_labels = 0
+        self._num_concretize = 0
+        self._num_labels = 0
 
-				# Early concretization optimization.
-				self._viewer = defaultdict(FNull)
+        # Early concretization optimization.
+        self._viewer = defaultdict(FNull)
+
+        # AW: adding isHoneypot flag
+        self._is_honeypot = False
 
     @property
     def concretecache(self):

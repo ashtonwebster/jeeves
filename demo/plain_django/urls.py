@@ -6,9 +6,7 @@ admin.autodiscover()
 from django.conf.urls.static import static
 from django.conf import settings
 
-# NOTE(JY): If you rename the "jelf" folder, you will want to change this as
-# well.
-from jelf import views
+from password import views
 
 urlpatterns = patterns('',
     # Examples:
@@ -19,8 +17,8 @@ urlpatterns = patterns('',
 
     url(r'^accounts/login/$', 'django.contrib.auth.views.login'),
     url(r'^accounts/logout/$', 'django.contrib.auth.views.logout_then_login'),
-    url(r'^accounts/profile/(?P<profile_name>\w+)$', views.profile_view),
-    url(r'^honeypot$', views.toggle_honeypot),
+    #url(r'^accounts/profile/(?P<profile_name>\w+)$', views.profile_view),
+    #url(r'^honeypot$', views.toggle_honeypot),
     url(r'^password$', views.password),
     url(r'^passwords$', views.passwords),
 
@@ -29,5 +27,5 @@ urlpatterns = patterns('',
     url(r'^register$', views.register_account),
 
     url(r'^index$', views.index),
-    url(r'^$', views.index),
+    #url(r'^$', views.index),
 ) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

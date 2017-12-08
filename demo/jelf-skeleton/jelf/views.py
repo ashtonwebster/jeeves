@@ -5,8 +5,9 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response
 from django.http import HttpResponseRedirect
 from django.contrib.auth.models import User
+import pdb
 
-from models import UserProfile
+from models import UserProfile, Password
 
 from sourcetrans.macro_module import macros, jeeves
 import JeevesLib
@@ -45,6 +46,7 @@ def request_wrapper(view_fn, *args, **kwargs):
                 return HttpResponseRedirect(JeevesLib.concretize(profile, path))
 
             concretizeState = JeevesLib.jeevesState.policyenv.getNewSolverState(profile)
+
             def concretize(val):
                 return concretizeState.concretizeExp(val, JeevesLib.jeevesState.pathenv.getEnv())
             add_to_context(context_dict, request, template_name, profile, concretize)
@@ -76,10 +78,13 @@ def index(request, user_profile):
 @request_wrapper
 @jeeves
 def profile_view(request, profile, profile_name):
+    #pdb.set_trace()
+
     profile = UserProfile.objects.get(username=profile_name)
     if profile == None:
         profile = UserProfile(username=request.user.username)
-    
+
+    # not convinced I need this part 
     if request.method == 'POST':
         profile.email = request.POST.get('email', '')
         profile.save()
@@ -89,6 +94,51 @@ def profile_view(request, profile, profile_name):
         "which_page": "profile",
     })
 
+@login_required
+@request_wrapper
+@jeeves
+def passwords(request, profile):
+    # display all passwords for user
+    #pdb.set_trace()
+    passwords_list = Password.objects.filter(user=profile).all()
+    return ("passwords.html", 
+            {"passwords" : passwords_list,
+                "which_page": "passwords.html"})
+
+@login_required
+@request_wrapper
+@jeeves
+def password(request, profile):
+    # enter a new password
+    if request.method == 'POST':
+        url = request.POST.get('url', None)
+        password = request.POST.get('password', None)
+        username = request.POST.get('username', None)
+
+        if url == None or password == None or username == None:
+            return ( 'password.html', {
+                'which_page' : 'password.html'})
+        
+        Password.objects.create(user=profile, site_url = url,
+                site_username = username, site_password = password)
+        return ('redirect', 'password')
+
+    elif request.method == 'GET':
+        return ( 'password.html', {
+            'which_page' : 'password.html'})
+    else:
+        raise Exception("invalid request type")
+
+
+
+# AW: toggles whether values will be garbled
+def toggle_honeypot(request):
+    JeevesLib.jeevesState._is_honeypot = not JeevesLib.jeevesState._is_honeypot
+    return render_to_response("honeypot.html", RequestContext(request,
+        {
+            'is_honeypot' : JeevesLib.jeevesState._is_honeypot,
+            'which_page' : "honeypot"
+        }))
 
 def register_account(request):
     if request.user.is_authenticated():

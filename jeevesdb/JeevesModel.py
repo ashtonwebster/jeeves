@@ -15,10 +15,13 @@ import JeevesLib
 from JeevesLib import fexpr_cast
 from fast.AST import Facet, FObject, Unassigned, FExpr, FNull
 import JeevesModelUtils
+import pdb
+
 
 class JeevesQuerySet(QuerySet):
     """The Jeeves version of Django's QuerySet.
     """
+
     @JeevesLib.supports_jeeves
     def get_jiter(self):
         """Creates an iterator for the QuerySet. Returns a list (object,
@@ -51,12 +54,16 @@ class JeevesQuerySet(QuerySet):
         def get_env(obj, fields, env):
             """Gets the Jeeves variable environment associated with the fields.
             """
+            honey_parsed = False
+            #pdb.set_trace()
             if hasattr(obj, "jeeves_vars"):
                 jeeves_vars = JeevesModelUtils.unserialize_vars(obj.jeeves_vars)
             else:
                 jeeves_vars = {}
             
+            value_list = []
             for var_name, value in jeeves_vars.iteritems():
+                value_list.append(value)
                 # TODO: We only need to do this whole label thing if we don't
                 # know where the value is going.
 
@@ -71,7 +78,21 @@ class JeevesQuerySet(QuerySet):
                 # TODO: See if the value is consistent.
                 label = acquire_label_by_name(self.model._meta.app_label
                     , var_name)
-                env[var_name] = (label, value)
+                    env[var_name] = (label, value)
+
+            # AW modified: if all conditions are true, then it will present the high value
+            # so we need to replace it with the sanitized value
+            if (all(v == True for v in value_list) and JeevesLib.jeevesState._is_honeypot):
+                for field in self.model._meta.fields:
+                    # if atttribute has honeypot function 
+                    if hasattr(self.model, "jeeves_get_honeypot_" + field.name):
+                        # call the honeypot function
+                        honeypot_function = \
+                            getattr(self.model, "jeeves_get_honeypot_" + field.name)
+                        jeeves_id = var_name.split('__')[2]
+                        honeypot_value = honeypot_function(jeeves_id)
+                        # assign the value to the faceted value high object 
+                        setattr(obj, field.name, honeypot_value)
 
             for field, subs in fields.iteritems() if fields else []:
                 # Do the same thing for the fields.
@@ -148,7 +169,19 @@ class JeevesQuerySet(QuerySet):
             return super(JeevesQuerySet, self).filter(**kwargs)
 
     @JeevesLib.supports_jeeves
+    def honey_parse_rec(self, f, id_index, jeeves_id = None, depth = 0):
+        if type(f) == Facet:
+            if id_index == depth:
+                jeeves_id = f.cond.name.split('__')[2]
+            if type(f.thn) == FObject and type(f.thn.v) == self.model:
+                self.honeypot_parse(f, jeeves_id)
+            elif type(f.thn) == Facet:
+                self.honey_parse_rec(f.thn, id_index, jeeves_id, depth+1)
+                #self.honey_parse_rec(f.els, id_index, jeeves_id, depth+1)
+
+    @JeevesLib.supports_jeeves
     def all(self):
+        #import pdb; pdb.set_trace();
         viewer = JeevesLib.get_viewer()
         if isinstance(viewer, FNull):
             # If we don't know who the viewer is, create facets.
@@ -168,7 +201,7 @@ class JeevesQuerySet(QuerySet):
                     elements.append(val)
                 for _ in xrange(popcount):
                     JeevesLib.jeevesState.pathenv.pop()
-            return elements
+            
         else:
             # Otherwise concretize early.
             elements = []
@@ -193,7 +226,8 @@ class JeevesQuerySet(QuerySet):
                         env[vlabel] = label
                         if label == vval:
                             elements.append(val)
-            return elements
+
+        return elements
 
     @JeevesLib.supports_jeeves
     def delete(self):

@@ -362,9 +362,11 @@ class JList2:
 			self.l = [(i, {}) for i in l]
 		else:
 			raise NotImplementedError
+                self.count = 0
 		
 	def append(self, val):
 		self.l.append((val, jeevesState.pathenv.getEnv()))
+                self.count += 1
 
 	def eval(self, env):
 		return [i for i,e in self.l if all(env[getLabel(v)] == e[v] for v in e)]
